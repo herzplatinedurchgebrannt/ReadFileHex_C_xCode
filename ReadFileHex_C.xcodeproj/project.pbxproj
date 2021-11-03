@@ -58,8 +58,16 @@
 			isa = PBXGroup;
 			children = (
 				D8296AD7272D0CDF00908C2E /* main.c */,
+				D850C5C427329A96005439A2 /* src */,
 			);
 			path = ReadFileHex_C;
+			sourceTree = "<group>";
+		};
+		D850C5C427329A96005439A2 /* src */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = src;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
