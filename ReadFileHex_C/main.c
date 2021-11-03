@@ -4,7 +4,7 @@
 #include <string.h>
 
 #define SAVE_MIDI_COMMANDS true
-#define PRINT_MIDI_COMMANDS true
+#define PRINT_MIDI_COMMANDS false
 #define CONVERT_MIDI true
 
 #define OK 0
@@ -45,11 +45,16 @@ int readByteBigEndian(char* input, int startByte, int size)
 {
     int result = 0;
     
+    /*
+    for (int y = 18; y < 22; y++){
+        
+        printf("%d\n",(int)(unsigned char)input[y]);
+    }*/
     
     if (size == 4)
     {
         // big endian
-        result = (int)(unsigned char)input[startByte+3] | (int)input[startByte+2]<<8 | (int)input[startByte+1]<<16 | (int)input[startByte]<<24;
+        result = (int)(unsigned char)input[startByte+3] | (int)(unsigned char)input[startByte+2]<<8 | (int)(unsigned char)input[startByte+1]<<16 | (int)(unsigned char)input[startByte]<<24;
     }
     else if (size == 2)
     {
@@ -229,7 +234,7 @@ int main()
     head = (midi_t *)malloc(sizeof(midi_t));
    
     FILE *ptr;
-    ptr = fopen("/Users/alexandermathieu/Coding/TestArea/Midi/simple.mid","rb");  // r for read, b for binary
+    ptr = fopen("/Users/alexandermathieu/Coding/TestArea/Midi/new.mid","rb");  // r for read, b for binary
     if (ptr == NULL)
     {
         perror("Error opening file");
@@ -248,6 +253,14 @@ int main()
     // erster Link muss current beschreiben, ab dem zweiten current -> next
     bool firstLink = true;
     fread(buffer,sizeof(buffer),1,ptr);
+    
+    
+    /*
+    for (int y = 18; y < 22; y++){
+        
+        printf("%d\n",(int)(unsigned char)buffer[y]);
+    };*/
+    
      
     //***********************************************************
     // READ FILE HEADER
@@ -274,6 +287,11 @@ int main()
     int noteThirtySecond    = headerDeltaTime / 8;
     int noteSixtyFourth     = headerDeltaTime / 16;
     
+    int notesBarAbsolutOld  = 0;
+    int notesBarAbsolutNew  = 0;
+    
+
+    
     
     // READ MIDI COMMAND STUFF
     int dataStart       = 0;
@@ -286,8 +304,10 @@ int main()
     
     int ticksAbsolut    = 0;
     int ticksFirstTime  = 0;
-
-    for (int i = 0; i<bufferSize; i++) // buffersize variable einsetzen
+    
+    
+    // skip header in loop
+    for (int i = bufferSize-trackLength; i<bufferSize; i++) // buffersize variable einsetzen
     {
         // exit condition funzt nicht, da mehrmals möglich
         if (buffer[i] == 0xFF && buffer[i+1] == 0x2F) // midibefehl "Ende Midi-Datei"
@@ -298,6 +318,8 @@ int main()
 
         if (buffer[i] == 0x80 || buffer[i] == 0x90) // note on || note off
         {
+            //printf("%d\n",i);
+            
             if (convertData == true)
             {
                 for (int u = 0; u < (int)(sizeof(midiConvArray)/sizeof(midiConvArray[0])); u++)
@@ -305,7 +327,7 @@ int main()
                     if (buffer[i+1] == midiConvArray[u].noteBefore)
                     {
                         buffer[i+1] = midiConvArray[u].noteAfter;
-                        printf("found note: %s \n",midiConvArray[u].instrument);
+                        //printf("found note: %s \n",midiConvArray[u].instrument);
                         break;
                     }
                 }
@@ -318,14 +340,13 @@ int main()
             velocityByte    = buffer[i+2];
             
             
-            if (buffer[i] == 0x90)
+            if (buffer[i] == 0x80 || buffer[i] == 0x90)
             {
-                // noteOff hat keine Dauer!
-                ticksSecond = buffer[i+4];
-                
-                int checkValue = (int)(unsigned char)buffer[i+3]; // gibt es zweiten Wert für Ticks?
+   
+                // check first ticks value
+                int checkFirstValue = (int)(unsigned char)buffer[i+3]; // gibt es zweiten Wert für Ticks?
                         
-                switch(checkValue)
+                switch(checkFirstValue)
                 {
                     case 0x00:
                         ticksFirst = 0;
@@ -400,21 +421,52 @@ int main()
                         ticksFirst = 0;
                         break;
                     default:
-                        ticksFirst = (int)(unsigned char)buffer[i+2];
+                        ticksFirst = (int)(unsigned char)buffer[i+3];
                         break;
                 }
+                
+                // check second ticks value
+                int checkSecondValue = (int)(unsigned char)buffer[i+4]; // gibt es zweiten Wert für Ticks?
+        
+                switch(checkSecondValue)
+                {
+                    case 0x00:
+                        ticksSecond = 0;
+                        break;
+                    case 0x80:
+                        ticksSecond = 0;
+                        break;
+                    case 0x90:
+                        ticksSecond = 0;
+                        break;
+                    case 0xFF:
+                        ticksSecond = 0;
+                        break;
+                    default:
+                        ticksSecond = (int)(unsigned char)buffer[i+4];
+                        break;
+                }
+                
+                ticksAbsolut += ticksSecond + ticksFirstTime;
+                printf("TicksAbsolut: %d\n",ticksAbsolut);
+                printf("bars: %d  %d\n",ticksAbsolut/noteWhole,buffer[i]);
+                
+                notesBarAbsolutNew = ticksAbsolut/noteWhole;
+                
+                if (notesBarAbsolutNew > notesBarAbsolutOld){
+                    
+                    printf("new bar!!");
+                    notesBarAbsolutOld = notesBarAbsolutNew;
+                }
+                
             }
             
-            
-
             if (saveMidiCommands == true)
             {
                 pushNew(firstLink,head,dataStart,dataEnd,statusByte,dataByte,velocityByte,ticksFirst,ticksSecond);
             }
             
-            
-            ticksAbsolut += ticksSecond + ticksFirstTime;
-            printf("TicksAbsolut: %d\n",ticksAbsolut);
+
                 
             // writing first time in list
             if (firstLink == true)
@@ -437,8 +489,6 @@ int main()
     {
         print_list(head);
     }
-
-       
 
     if (saveMidiData == true)
     {
