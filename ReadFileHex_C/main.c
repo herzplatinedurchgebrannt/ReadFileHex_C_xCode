@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h> //malloc function
 #include <stdbool.h>
+#include <string.h>
 
 #define SAVE_MIDI_COMMANDS true
 #define PRINT_MIDI_COMMANDS false
 #define CONVERT_MIDI true
+
+#define OK 0
+#define ERROR_BUFFER_TOO_SMALL 1
 
 // **********************
 // typdefinitionen
@@ -33,14 +37,95 @@ typedef struct
 
 // ***********************
 // funktionen
-int readByte()
+
+
+int readByteBigEndian(char* input, int startByte, int size)
 {
     int result = 0;
-    int exponent = 0;
-    int value = 0;
-
+    
+    
+    if (size == 4)
+    {
+        // big endian
+        result = (int)(unsigned char)input[startByte+3] | (int)input[startByte+2]<<8 | (int)input[startByte+1]<<16 | (int)input[startByte]<<24;
+    }
+    else if (size == 2)
+    {
+        // big endian
+        result = (int)(unsigned char)input[startByte+1] | (int)(unsigned char)input[startByte]<<8;
+    }
+    else
+    {
+        // ....
+        return 1;
+    }
+    /*
+    for (int z = startByte; z < startByte+size; z++)
+    {
+        printf("%d\n", (int)(unsigned char)input[z]);
+        result += (int)(unsigned char)input[z];
+    }*/
+    
     return result;
 }
+
+int readByteLittleEndian(unsigned char* input, int startByte, int size)
+{
+    int result = 0;
+    
+    
+    if (size == 4)
+    {
+        // big endian
+        result = (int)(unsigned char)input[startByte] | (int)input[startByte+1]<<8 | (int)input[startByte+2]<<16 | (int)input[startByte+3]<<24;
+    }
+    else if (size == 2)
+    {
+        // big endian
+        result = (int)(unsigned char)input[startByte] | (int)(unsigned char)input[startByte+1]<<8;
+    }
+    else
+    {
+        // ....
+        return 1;
+    }
+    /*
+    for (int z = startByte; z < startByte+size; z++)
+    {
+        printf("%d\n", (int)(unsigned char)input[z]);
+        result += (int)(unsigned char)input[z];
+    }*/
+    
+    return result;
+}
+
+
+
+
+int readText(char* input /*Eingabe-Parameter*/, char* output /*Rückgabe-Parameter*/, int outputLen /*Größe von output*/, int startByte, int size)
+{
+    char temp[13] = "";
+    
+    for (int z = startByte; z < startByte+size; z++)
+    {
+        //printf("%c\n", input[z]);
+        temp[z] = (unsigned char)input[z];
+    }
+        
+    if (strlen(temp) < outputLen)    // passt temp in output?
+    {
+        strncpy(output, temp, size);            // temp in output kopieren
+        return OK;                       // OK zurückgeben
+    }
+    else
+    {
+        return ERROR_BUFFER_TOO_SMALL;   // Fehler zurückgeben
+    }
+}
+
+
+
+
 
 void print_list(midi_t * head) {
     midi_t * current = head;
@@ -78,7 +163,6 @@ void push(midi_t * head, int dataStart, int dataEnd, int statusByte, int dataByt
 }
 
 void pushNew(bool firstLink, midi_t * head, int dataStart, int dataEnd, int statusByte, int dataByte, int velocityByte, int ticksFirst, int ticksSecond) {
-    
     if (firstLink == false)
     {
         midi_t * current = head;
@@ -129,8 +213,9 @@ void firstPush(midi_t * head, int dataStart, int dataEnd, int statusByte, int da
     current->next = NULL;
 }
 
+
+
 // ***********************
-// main
 int main()
 {
     // linked list how to
@@ -186,17 +271,25 @@ int main()
 
     printf("filesize: %d\n", bufferSize);
 
-    unsigned char buffer[bufferSize];
+    char buffer[bufferSize];
     
     // erster Link muss current beschreiben, ab dem zweiten current -> next
     bool firstLink = true;
     fread(buffer,sizeof(buffer),1,ptr);
+     
+    // READ HEADER OF MIDI FILE
+    char headerChunk[4];
+    readText(buffer, headerChunk, 5, 0, 4);
     
-    // funktion schreiben!
-    double headerDeltaTime = 256*buffer[12]+buffer[13];
+    int headerSize          = readByteBigEndian(buffer, 4, 4);
+    int headerFileFormat    = readByteBigEndian(buffer, 8, 2);
+    int headerTracks        = readByteBigEndian(buffer, 10, 2);
+    int headerDeltaTime    = readByteBigEndian(buffer, 12, 2);
+
     
     
     
+    return 0;
     
     
     // read midi command stuff
