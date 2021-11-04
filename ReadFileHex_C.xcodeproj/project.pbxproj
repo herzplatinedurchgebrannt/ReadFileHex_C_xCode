@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		D8296AD8272D0CDF00908C2E /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = D8296AD7272D0CDF00908C2E /* main.c */; };
+		D8BEA5042733E1EF00545A04 /* lxMidi.c in Sources */ = {isa = PBXBuildFile; fileRef = D8BEA5032733E1EF00545A04 /* lxMidi.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +26,8 @@
 /* Begin PBXFileReference section */
 		D8296AD4272D0CDF00908C2E /* ReadFileHex_C */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ReadFileHex_C; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8296AD7272D0CDF00908C2E /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		D8BEA5002733E0FB00545A04 /* lxMidi.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = lxMidi.h; sourceTree = "<group>"; };
+		D8BEA5032733E1EF00545A04 /* lxMidi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = lxMidi.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +69,8 @@
 		D850C5C427329A96005439A2 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				D8BEA5002733E0FB00545A04 /* lxMidi.h */,
+				D8BEA5032733E1EF00545A04 /* lxMidi.c */,
 			);
 			path = src;
 			sourceTree = "<group>";
@@ -127,6 +132,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D8BEA5042733E1EF00545A04 /* lxMidi.c in Sources */,
 				D8296AD8272D0CDF00908C2E /* main.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -249,6 +255,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				GCC_NO_COMMON_BLOCKS = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -257,6 +264,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				GCC_NO_COMMON_BLOCKS = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
